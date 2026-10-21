@@ -1,0 +1,12 @@
+# KEDA on Fargate: Deployments only (no DaemonSets), explicit requests so Fargate
+# can size each pod. Uses no AWS permissions (it only queries Prometheus).
+resources:
+  operator:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 512Mi }
+  metricServer:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 512Mi }
+  webhooks:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }

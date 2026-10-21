@@ -1,0 +1,5 @@
+apiVersion: v2
+name: monitoring-config
+description: Grafana admin login (External Secrets) and the lab dashboards (CPU/memory, pod counts)
+type: application
+version: 0.1.0

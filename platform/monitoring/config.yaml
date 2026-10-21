@@ -1,0 +1,11 @@
+# Read by the "platform" ApplicationSet (one Application per platform/<name>/config.yaml).
+# PDF: "Deploy on the EKS cluster some monitoring solution (CW agent is not allowed)
+# and expose it, so we can surf to it via the Windows instance and see the memory
+# and cpu of your application."
+namespace: monitoring
+autoSync: true
+serverSideApply: true     # the Prometheus CRDs are too big for client-side apply
+chart:
+  repoURL: https://prometheus-community.github.io/helm-charts
+  name: kube-prometheus-stack
+  version: 92.11.0        # Prometheus Operator v0.94.1
