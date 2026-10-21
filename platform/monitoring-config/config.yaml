@@ -1,0 +1,5 @@
+# Local chart (no "chart:" block = this folder is the chart). Lives next to
+# kube-prometheus-stack in "monitoring": the Grafana admin secret (via External
+# Secrets) and the Grafana dashboards as code.
+namespace: monitoring
+autoSync: true

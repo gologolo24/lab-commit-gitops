@@ -1,0 +1,286 @@
+{
+  "uid": "lab-commit-pods",
+  "title": "Lab-Commit: Pods & Load",
+  "description": "Pod counts of the frontend and backend (kube-state-metrics) and the frontend request rate that drives KEDA scaling.",
+  "tags": [
+    "lab-commit"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Frontend pods",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(kube_deployment_status_replicas_available{namespace=\"__APP_NAMESPACE__\",deployment=\"frontend\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Backend pods",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(kube_deployment_status_replicas_available{namespace=\"__APP_NAMESPACE__\",deployment=\"backend\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Frontend requests/s",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{namespace=\"__APP_NAMESPACE__\",service=\"frontend\",handler=\"/\"}[1m]))",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Frontend pods wanted by the autoscaler",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"__APP_NAMESPACE__\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Pods over time (available replicas)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "kube_deployment_status_replicas_available{namespace=\"__APP_NAMESPACE__\",deployment=~\"frontend|backend\"}",
+          "legendFormat": "{{deployment}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Frontend load vs. scale-out threshold (10 req/s per pod)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(http_requests_total{namespace=\"__APP_NAMESPACE__\",service=\"frontend\",handler=\"/\"}[1m]))",
+          "legendFormat": "requests/s",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "10 * sum(kube_deployment_status_replicas_available{namespace=\"__APP_NAMESPACE__\",deployment=\"frontend\"})",
+          "legendFormat": "threshold: 10 req/s x frontend pods",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}

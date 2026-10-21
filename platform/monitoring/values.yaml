@@ -1,0 +1,100 @@
+# kube-prometheus-stack on EKS **Fargate** (no nodes):
+# - no DaemonSets (node-exporter, windows-exporter) — Fargate can't run them
+# - nothing may listen on 10250 (the Fargate kubelet port) -> operator webhook moved
+# - container CPU/memory come from cAdvisor through the API-server proxy
+# - the managed control plane (etcd, scheduler, controller-manager) isn't scrapeable
+# - every pod has resource requests (Fargate sizes each pod from them)
+# Environment-specific bits (Ingress host, certificate, SG) are in envs/<env>/values.yaml.
+
+defaultRules:
+  create: false            # no Alertmanager in the lab: no alert rules to evaluate
+
+alertmanager:
+  enabled: false
+
+nodeExporter:
+  enabled: false           # DaemonSet: not possible on Fargate
+windowsMonitoring:
+  enabled: false
+
+kubeEtcd:
+  enabled: false           # managed by EKS
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeProxy:
+  enabled: false           # no kube-proxy DaemonSet on Fargate
+
+kubelet:
+  enabled: false           # replaced by the cAdvisor-via-API-server job below
+
+prometheusOperator:
+  tls:
+    internalPort: 10260    # default 10250 clashes with the Fargate kubelet
+  admissionWebhooks:
+    deployment:
+      tls:
+        internalPort: 10261
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 256Mi }
+
+kube-state-metrics:        # pod counts per deployment (dashboard: "Lab-Commit Pods")
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 128Mi }
+
+prometheus:
+  # cAdvisor through the API server needs nodes/proxy.
+  additionalRulesForClusterRole:
+    - apiGroups: [""]
+      resources: ["nodes/proxy"]
+      verbs: ["get"]
+  prometheusSpec:
+    scrapeInterval: 15s
+    retention: 2d
+    # Pick up ServiceMonitors/PodMonitors from every namespace (our apps).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    resources:
+      requests: { cpu: 500m, memory: 1Gi }
+      limits: { memory: 2Gi }
+    # Fargate: storage is the pod's ephemeral disk (no EBS). Lab only: data is
+    # lost on restart; production would use a remote write target.
+    additionalScrapeConfigs:
+      - job_name: cadvisor-fargate
+        scheme: https
+        kubernetes_sd_configs:
+          - role: node
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+        metric_relabel_configs:
+          # keep only per-container CPU and memory (what the dashboards use)
+          - source_labels: [__name__]
+            regex: container_cpu_usage_seconds_total|container_memory_working_set_bytes
+            action: keep
+
+grafana:
+  admin:
+    existingSecret: grafana-admin   # synced from Secrets Manager by platform/monitoring-config
+    userKey: admin-user
+    passwordKey: admin-password
+  defaultDashboardsEnabled: false   # most default dashboards need node-exporter
+  persistence:
+    enabled: false
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard   # dashboards from platform/monitoring-config (same namespace)
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { memory: 384Mi }

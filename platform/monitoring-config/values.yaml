@@ -1,0 +1,7 @@
+# Environment-specific values go in envs/<env>/values.yaml.
+region: ""
+# IRSA role that may read ONLY the Grafana admin secret (created by Terraform,
+# infra repo stack 50-cluster-bootstrap).
+secretStoreRoleArn: ""
+grafanaAdminSecret: ""     # Secrets Manager secret name
+appNamespace: lab-commit   # namespace the dashboards look at

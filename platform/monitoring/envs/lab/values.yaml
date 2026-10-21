@@ -1,0 +1,22 @@
+# lab: Grafana behind the shared INTERNAL ALB, HTTPS only (reachable only inside the VPC,
+# e.g. from the Windows test client). Record grafana.lab-commit.internal is created by
+# external-dns from this host. IDs come from the infra repo's Terraform outputs.
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    hosts:
+      - grafana.lab-commit.internal
+    path: /
+    pathType: Prefix
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internal
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/group.name: lab-commit
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:788717064995:certificate/39600bac-1503-40b4-ba25-e7324ba33eb2
+      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-2021-06
+      alb.ingress.kubernetes.io/security-groups: sg-02188a25180c64bc3
+      alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
+      alb.ingress.kubernetes.io/load-balancer-attributes: routing.http.drop_invalid_header_fields.enabled=true
+      alb.ingress.kubernetes.io/healthcheck-path: /api/health

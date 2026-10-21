@@ -1,0 +1,10 @@
+# PDF: "when the load will be more than 10 requests per second it will deploy
+# additional pod for the frontend service ... till 4 pods". KEDA turns a Prometheus
+# query (requests/s) into an HPA; the ScaledObject itself lives in apps/frontend.
+namespace: keda
+autoSync: true
+serverSideApply: true     # large CRDs
+chart:
+  repoURL: https://kedacore.github.io/charts
+  name: keda
+  version: 2.21.0
