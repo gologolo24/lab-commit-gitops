@@ -1,0 +1,17 @@
+# --- Helm ---
+# Packaged charts and downloaded chart dependencies are build output
+*.tgz
+charts/*/charts/
+
+# --- Secrets: never commit (secrets come from AWS Secrets Manager) ---
+.env
+.env.*
+*.key
+*-secret.yaml
+kubeconfig*
+
+# --- OS / editors ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
