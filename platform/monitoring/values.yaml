@@ -105,9 +105,10 @@ grafana:
   # - At 512Mi (-> 1 GB pod) Grafana used ~655 MiB + sidecars ~150 MiB; with dashboards
   #   refreshing every 10 s during the load test it stalled (15 s queries, probe
   #   timeouts, HTTP 503).
-  # Now: 480m + 2 x 10m = 0.5 vCPU, 1 GiB + 2 x 96 MiB -> 0.5 vCPU / 2 GB pod.
+  # Now: 480m + 2 x 10m = 0.5 vCPU; 2 GiB + 2 x 96 MiB + 256 MiB -> 0.5 vCPU / 3 GB
+  # pod, so Grafana gets 2 GiB (3x what it used) and the pod keeps ~0.5 GB spare.
   resources:
-    requests: { cpu: 480m, memory: 1Gi }
-    limits: { memory: 1536Mi }
+    requests: { cpu: 480m, memory: 2Gi }
+    limits: { memory: 2Gi }
   livenessProbe:
     initialDelaySeconds: 120
