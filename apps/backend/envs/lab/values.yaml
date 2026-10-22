@@ -1,7 +1,7 @@
 # lab environment. IDs come from the infra repo's Terraform outputs.
 image:
   repository: 788717064995.dkr.ecr.us-east-1.amazonaws.com/lab-commit/backend
-  tag: 1.0.1
+  tag: 1.0.2
 region: us-east-1
 db:
   host: lab-commit.c4jg246o6xpw.us-east-1.rds.amazonaws.com
