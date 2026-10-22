@@ -95,6 +95,11 @@ grafana:
     dashboards:
       enabled: true
       label: grafana_dashboard   # dashboards from platform/monitoring-config (same namespace)
+  # Fargate sizes the pod from its requests. At 100m (-> 0.25 vCPU) Grafana needed
+  # >2.5 min to load its plugins and the liveness probe killed it (CrashLoopBackOff).
+  # 500m -> 0.5 vCPU / 1 GB pod; first liveness check after 120 s.
   resources:
-    requests: { cpu: 100m, memory: 192Mi }
-    limits: { memory: 384Mi }
+    requests: { cpu: 500m, memory: 512Mi }
+    limits: { memory: 1Gi }
+  livenessProbe:
+    initialDelaySeconds: 120
