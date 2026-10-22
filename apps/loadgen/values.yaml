@@ -1,0 +1,41 @@
+# Environment-specific values (URL, IDs from Terraform) go in envs/<env>/values.yaml.
+image: grafana/k6:2.3.0@sha256:9c2dee7f8ed74d317e4027c06a10f169b625638189de8d4555d0b3486a5aeb34
+
+targetUrl: ""             # the frontend's HTTPS URL (through the internal ALB)
+
+# The lab CA certificate, synced from SSM by External Secrets, so k6 verifies the
+# ALB's self-signed certificate instead of skipping TLS checks.
+region: ""
+secretStoreRoleArn: ""    # IRSA role that may read only caCertParameter
+caCertParameter: /lab-commit/tls/ca-cert
+
+# Security Groups for Pods: the cluster security group (DNS) + the one the ALB
+# allows on 443.
+podSecurityGroupIds: []
+
+# Requests per second over time. KEDA adds a frontend pod per 10 requests/s,
+# so: 8/s = 1 pod, 15/s = 2, 25/s = 3, 45/s = 4 (the maximum), then 0 = back to 1.
+# Each step is held long enough for a Fargate pod to start (~1 min) and the
+# 1-minute request rate to catch up.
+stages:
+  - { duration: 30s, target: 8 }
+  - { duration: 2m, target: 8 }
+  - { duration: 30s, target: 15 }
+  - { duration: 3m, target: 15 }
+  - { duration: 30s, target: 25 }
+  - { duration: 3m, target: 25 }
+  - { duration: 30s, target: 45 }
+  - { duration: 4m, target: 45 }
+  - { duration: 30s, target: 0 }
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+job:
+  activeDeadlineSeconds: 1800    # stop a stuck test after 30 min
+  ttlSecondsAfterFinished: 1800  # keep the k6 summary readable for 30 min, then free the Fargate pod

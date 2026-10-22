@@ -1,0 +1,22 @@
+# Security Groups for Pods: pods labelled lab-commit/db-access (the backend and the
+# migration job) get the security group that RDS allows on 5432. Other pods in the
+# cluster cannot reach the database. Fargate reads this when it starts a pod, so it
+# is created first (wave -2).
+{{- if not .Values.podSecurityGroupIds }}
+{{- fail "podSecurityGroupIds is required (cluster security group + backend pods security group)" }}
+{{- end }}
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-access
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  podSelector:
+    matchLabels:
+      lab-commit/db-access: "true"
+  securityGroups:
+    groupIds:
+      {{- toYaml .Values.podSecurityGroupIds | nindent 6 }}

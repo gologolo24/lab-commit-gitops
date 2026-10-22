@@ -1,0 +1,7 @@
+# Read by the "apps" ApplicationSet (one Application per apps/<name>/config.yaml).
+# PDF: "Surfing the frontend service, should show 'Hello Lab-Commit' with 'X' as a
+# String (X - app version number)", only via the HTTPS URL on the internal ALB.
+# Local chart (no "chart:" block = this folder is the chart).
+namespace: lab-commit
+autoSync: true
+podSecurity: restricted

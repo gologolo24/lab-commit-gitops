@@ -1,0 +1,38 @@
+# Environment-specific values (image tag, IDs from Terraform) go in envs/<env>/values.yaml.
+image:
+  repository: ""
+  tag: ""                 # set by the frontend pipeline (CodeBuild) on every release
+
+backendUrl: http://backend:8080
+pollIntervalSeconds: 5    # PDF: "pull each X amount of time (5 seconds)"
+
+# Fargate sizes each pod from its requests (0.25 vCPU / 0.5 GB is the smallest size).
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+# Internal ALB, shared with Argo CD and Grafana (IngressGroup), HTTPS only.
+# external-dns creates the Route 53 record from the host.
+ingress:
+  host: ""
+  annotations: {}
+
+# KEDA: one more pod per 10 page loads/s (PDF: "more than 10 requests per second
+# ... deploy additional pod ... till 4 pods"). The count is page loads only
+# (handler="/"): not health checks, /metrics or the page's own refresh calls.
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 4
+  requestsPerSecondPerPod: 10
+  prometheusUrl: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  scaleUp:                # at most 1 new pod every 30 s, so each step is visible
+    pods: 1
+    periodSeconds: 30
+  scaleDown:              # wait 60 s of lower load, then remove 1 pod every 30 s
+    stabilizationWindowSeconds: 60
+    pods: 1
+    periodSeconds: 30

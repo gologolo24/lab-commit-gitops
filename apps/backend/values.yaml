@@ -1,0 +1,40 @@
+# Environment-specific values (image tag, IDs from Terraform) go in envs/<env>/values.yaml.
+image:
+  repository: ""
+  tag: ""                 # set by the backend pipeline (CodeBuild) on every release
+
+replicas: 2
+region: ""
+
+db:
+  host: ""
+  port: 5432
+  name: labcommit
+  user: app_reader        # logs in with IAM tokens; may only SELECT from lab_values
+  masterSecretArn: ""     # read by the migration job only
+  seedValue: 5            # first value in lab_values (PDF example: "Hello Lab-commit 5")
+
+# IRSA roles (created by Terraform, infra repo stack 30-data).
+serviceAccounts:
+  backend:
+    roleArn: ""           # rds-db:connect as db.user, nothing else
+  dbMigrator:
+    roleArn: ""           # secretsmanager:GetSecretValue on the RDS master secret, nothing else
+
+# Security Groups for Pods (NetworkPolicy is not enforced on Fargate): the cluster
+# security group (DNS, control plane, Prometheus, frontend) + the one RDS allows on 5432.
+podSecurityGroupIds: []
+
+# Fargate sizes each pod from its requests (0.25 vCPU / 0.5 GB is the smallest size).
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+migration:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 600   # Fargate bills a finished pod until it is deleted

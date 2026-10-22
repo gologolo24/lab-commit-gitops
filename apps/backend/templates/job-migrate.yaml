@@ -1,0 +1,51 @@
+# Database setup (python -m app.migrate): table lab_values, seed value, read-only
+# user app_reader. Idempotent. Runs on every sync as an Argo CD hook, after the
+# ServiceAccounts and the SecurityGroupPolicy (wave -2) and before the Deployment
+# (wave 0). If it fails, the sync stops and the running version stays.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: {{ .Values.migration.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migration.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.migration.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "backend.labels" . | nindent 8 }}
+        app.kubernetes.io/component: db-migrate
+        lab-commit/db-access: "true"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: db-migrator
+      automountServiceAccountToken: false   # no Kubernetes API access; the IRSA token is mounted separately
+      securityContext:
+        {{- include "backend.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "backend.image" . }}
+          command: ["python", "-m", "app.migrate"]
+          env:
+            {{- include "backend.dbEnv" . | nindent 12 }}
+            - name: DB_MASTER_SECRET_ID
+              value: {{ required "db.masterSecretArn is required" .Values.db.masterSecretArn | quote }}
+            - name: SEED_VALUE
+              value: {{ .Values.db.seedValue | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- include "backend.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

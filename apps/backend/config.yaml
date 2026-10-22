@@ -1,0 +1,7 @@
+# Read by the "apps" ApplicationSet (one Application per apps/<name>/config.yaml).
+# PDF: "Backend service that pulls data from the RDS". Runs inside the cluster
+# only (ClusterIP, no Ingress); the frontend calls it every 5 seconds.
+# Local chart (no "chart:" block = this folder is the chart).
+namespace: lab-commit
+autoSync: true
+podSecurity: restricted
