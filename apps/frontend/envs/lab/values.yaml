@@ -1,7 +1,7 @@
 # lab environment. IDs come from the infra repo's Terraform outputs; the ALB
 # annotations match Argo CD's and Grafana's (one shared ALB, IngressGroup lab-commit).
 image:
-  repository: 788717064995.dkr.ecr.us-east-1.amazonaws.com/lab-commit/frontend
+  repository: 788717064995.dkr.ecr.us-west-2.amazonaws.com/lab-commit/frontend
   tag: 1.0.1
 backendUrl: http://backend.lab-commit.svc.cluster.local:8080
 ingress:
@@ -11,8 +11,8 @@ ingress:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/group.name: lab-commit
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:788717064995:certificate/39600bac-1503-40b4-ba25-e7324ba33eb2
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:788717064995:certificate/69dfe29f-54a8-4039-a811-8073e14e67b7
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-2021-06
-    alb.ingress.kubernetes.io/security-groups: sg-02188a25180c64bc3
+    alb.ingress.kubernetes.io/security-groups: sg-0e03b543d58c9fabf
     alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
     alb.ingress.kubernetes.io/load-balancer-attributes: routing.http.drop_invalid_header_fields.enabled=true
