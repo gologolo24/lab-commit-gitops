@@ -81,8 +81,10 @@ The database needs no stored secret at all: the backend logs in with 15-minute I
 
 ## Who can access this repo
 
+- The repo is **public** (read-only for everyone). It holds no secrets: they all live in AWS Secrets Manager.
 - **Argo CD** reads it with a read-only deploy key.
 - **CodeBuild** (frontend/backend pipelines) only updates image tags, using a write deploy key that works for this repo alone.
+- Nobody else can push.
 
 ## Related repositories
 
