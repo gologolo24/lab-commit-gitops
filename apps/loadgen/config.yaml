@@ -1,0 +1,7 @@
+# Read by the "apps" ApplicationSet (one Application per apps/<name>/config.yaml).
+# PDF: "Create load generator ... in order to load the application". Not synced
+# automatically: press SYNC on lab-loadgen in Argo CD to start one load test (k6 Job).
+# Local chart (no "chart:" block = this folder is the chart).
+namespace: loadgen
+autoSync: false
+podSecurity: restricted

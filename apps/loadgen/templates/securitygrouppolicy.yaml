@@ -1,0 +1,18 @@
+# Security Groups for Pods: the k6 pod gets the security group the ALB allows on
+# 443 (the cluster security group alone cannot reach the ALB).
+{{- if not .Values.podSecurityGroupIds }}
+{{- fail "podSecurityGroupIds is required (cluster security group + loadgen pods security group)" }}
+{{- end }}
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: loadgen
+  labels:
+    {{- include "loadgen.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: loadgen
+  securityGroups:
+    groupIds:
+      {{- toYaml .Values.podSecurityGroupIds | nindent 6 }}

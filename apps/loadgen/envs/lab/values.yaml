@@ -1,0 +1,9 @@
+# lab environment. IDs come from the infra repo's Terraform outputs.
+targetUrl: https://lab-commit-task.lab-commit.internal/
+
+region: us-east-1
+secretStoreRoleArn: arn:aws:iam::788717064995:role/lab-commit-irsa-eso-loadgen
+
+podSecurityGroupIds:
+  - sg-098475c9de1cdec8a   # EKS cluster security group
+  - sg-02f9572a1c0d8659d   # lab-commit-loadgen-pods (the ALB allows 443 from it)

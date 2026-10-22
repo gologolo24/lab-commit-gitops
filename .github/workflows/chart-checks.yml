@@ -1,0 +1,40 @@
+# Checks on every PR: each local chart (a folder with Chart.yaml) must lint and
+# render with its env values, so a broken chart never reaches Argo CD. Uses the
+# Helm 3 that comes with the runner; no cluster or AWS access.
+name: chart-checks
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "platform/**"
+      - ".github/workflows/chart-checks.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Actions pinned to commit SHAs; the tag is in the comment.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: helm lint + template (every env)
+        run: |
+          set -euo pipefail
+          helm version --short
+          for chart in $(dirname */*/Chart.yaml); do
+            ns=$(yq '.namespace' "$chart/config.yaml")
+            for env_values in "$chart"/envs/*/values.yaml; do
+              echo "::group::$chart ($env_values)"
+              helm lint "$chart" --strict -f "$chart/values.yaml" -f "$env_values" --namespace "$ns"
+              helm template "$(basename "$chart")" "$chart" -f "$chart/values.yaml" -f "$env_values" --namespace "$ns" > /dev/null
+              echo "::endgroup::"
+            done
+          done

@@ -1,0 +1,20 @@
+# lab environment. IDs come from the infra repo's Terraform outputs.
+image:
+  repository: 788717064995.dkr.ecr.us-east-1.amazonaws.com/lab-commit/backend
+  tag: 1.0.0
+
+region: us-east-1
+
+db:
+  host: lab-commit.c4jg246o6xpw.us-east-1.rds.amazonaws.com
+  masterSecretArn: arn:aws:secretsmanager:us-east-1:788717064995:secret:rds!db-01947d02-e137-4d8d-9ae6-62bcbde16665-jVrFTl
+
+serviceAccounts:
+  backend:
+    roleArn: arn:aws:iam::788717064995:role/lab-commit-irsa-backend
+  dbMigrator:
+    roleArn: arn:aws:iam::788717064995:role/lab-commit-irsa-db-migrator
+
+podSecurityGroupIds:
+  - sg-098475c9de1cdec8a   # EKS cluster security group
+  - sg-01c0f7433577634d6   # lab-commit-backend-pods (RDS allows 5432 from it only)

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: frontend
+description: '"Hello Lab-Commit v<version>" plus the database value (polled from the backend every 5 s), behind the internal HTTPS ALB; KEDA scales it on requests/s'
+type: application
+version: 0.1.0

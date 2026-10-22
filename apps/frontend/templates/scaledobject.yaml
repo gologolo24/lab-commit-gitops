@@ -1,0 +1,38 @@
+# PDF: "when the load will be more than 10 requests per second it will deploy
+# additional pod for the frontend service ... till 4 pods". KEDA creates and drives
+# an HPA (keda-hpa-frontend): desired pods = ceil(page loads per second / 10),
+# between 1 and 4. The HPA re-reads the metric every 15 s (Kubernetes default).
+{{- $a := .Values.autoscaling }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: frontend
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: frontend
+  minReplicaCount: {{ $a.minReplicas }}
+  maxReplicaCount: {{ $a.maxReplicas }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Pods
+              value: {{ $a.scaleUp.pods }}
+              periodSeconds: {{ $a.scaleUp.periodSeconds }}
+        scaleDown:
+          stabilizationWindowSeconds: {{ $a.scaleDown.stabilizationWindowSeconds }}
+          policies:
+            - type: Pods
+              value: {{ $a.scaleDown.pods }}
+              periodSeconds: {{ $a.scaleDown.periodSeconds }}
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: {{ $a.prometheusUrl | quote }}
+        query: sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}",service="frontend",handler="/"}[1m]))
+        threshold: {{ $a.requestsPerSecondPerPod | quote }}
+        ignoreNullValues: "true"   # no page loads yet = 0 requests/s

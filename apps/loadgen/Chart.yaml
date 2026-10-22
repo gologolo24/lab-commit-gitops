@@ -1,0 +1,5 @@
+apiVersion: v2
+name: loadgen
+description: k6 load test through the HTTPS ALB URL (8 -> 15 -> 25 -> 45 requests/s), started by an Argo CD sync
+type: application
+version: 0.1.0

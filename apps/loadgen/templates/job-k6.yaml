@@ -1,0 +1,88 @@
+# One load test per Argo CD sync: a Sync hook runs after everything else is ready
+# (wave 1: the CA Secret, the script and the SecurityGroupPolicy are wave 0). The
+# previous run is deleted when the next sync starts.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-script
+  labels:
+    {{- include "loadgen.labels" . | nindent 4 }}
+data:
+  loadtest.js: |-
+{{ .Files.Get "files/loadtest.js" | indent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k6
+  labels:
+    {{- include "loadgen.labels" . | nindent 4 }}
+automountServiceAccountToken: false   # no AWS or Kubernetes API access needed
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-load-test
+  labels:
+    {{- include "loadgen.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0           # a failed load test is reported, not silently re-run
+  activeDeadlineSeconds: {{ .Values.job.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "loadgen.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: k6
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 12345          # the k6 user in the image
+        runAsGroup: 12345
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: k6
+          image: {{ .Values.image | quote }}
+          args: ["run", "/scripts/loadtest.js"]
+          env:
+            - name: TARGET_URL
+              value: {{ required "targetUrl is required" .Values.targetUrl | quote }}
+            - name: STAGES
+              value: {{ toJson .Values.stages | quote }}
+            - name: SSL_CERT_FILE      # trust the lab CA (and nothing else)
+              value: /etc/lab-ca/ca.crt
+            - name: K6_NO_USAGE_REPORT # no anonymous usage report to the internet
+              value: "true"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+            - name: lab-ca
+              mountPath: /etc/lab-ca
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: script
+          configMap:
+            name: k6-script
+        - name: lab-ca
+          secret:
+            secretName: lab-ca
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

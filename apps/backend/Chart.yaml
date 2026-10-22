@@ -1,0 +1,5 @@
+apiVersion: v2
+name: backend
+description: Reads the latest value from RDS PostgreSQL (IAM auth, verified TLS); inside the cluster only
+type: application
+version: 0.1.0
