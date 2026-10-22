@@ -3,9 +3,7 @@
 image:
   repository: 788717064995.dkr.ecr.us-east-1.amazonaws.com/lab-commit/frontend
   tag: 1.0.0
-
 backendUrl: http://backend.lab-commit.svc.cluster.local:8080
-
 ingress:
   host: lab-commit-task.lab-commit.internal
   annotations:
